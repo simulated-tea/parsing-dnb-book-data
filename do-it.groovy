@@ -1,4 +1,4 @@
-
+import util.Marc21XmlParser
 
 def inputFileName
 
@@ -12,8 +12,6 @@ if (null == inputFileName) {
 }
 
 def inputFile = new File(inputFileName)
-
-def data = (new XmlSlurper()).parseText(inputFile.text)
 
 def dataExtractionPlan = [
    [name: "ISBN",                           findby: [tag: "020", code: "9"],  resolve_multiple: "collect"],
@@ -38,8 +36,12 @@ def dataExtractionPlan = [
    [name: "Schlagworte obskur",             findby: [tag: "926", code: "x"],  resolve_multiple: "collect"],
    [name: "Bibliographisch Einordnung",     findby: [tag: "655", code: "a"],  resolve_multiple: "collect"],
    [name: "Bibliographisch Einordnung Typ", findby: [tag: "655", code: "2"],  resolve_multiple: "collect"],
-   [name: "Abstract Link",                  findby: [tag: "856", code: "u"],  resolve_multiple: "collect"],
-   [name: "Abstract Link Typ",              findby: [tag: "856", code: "3"],  resolve_multiple: "collect"],
+   [name: "Klappentext Link",               findby: [tag: "856", code: "u"],  resolve_multiple: "collect"],
+   [name: "Klappentext Link Typ",           findby: [tag: "856", code: "3"],  resolve_multiple: "collect"],
 ]
+
+def parser = new Marc21XmlParser(dataExtractionPlan)
+
+def bookData = parser.parseText(inputFile.text)
 
 System.exit 0
