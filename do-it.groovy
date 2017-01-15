@@ -11,7 +11,7 @@ if (null == inputFileName) {
     System.exit 1
 }
 
-def inputFile = new File(inputFileName, )
+def inputFile = new File(inputFileName)
 
 def data = (new XmlSlurper()).parseText(inputFile.text)
 
