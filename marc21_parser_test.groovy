@@ -15,6 +15,6 @@ assert result instanceof List
 assert result.size() == 1
 assert result[0].ISBN == ["978-3-462-04897-1", "3-462-04897-X"]
 assert result[0]."Einband und Preis" == ["Festeinband : EUR 18.50 (AT), EUR 17.99 (DE)"]
-//assert result[0].Titel == ["Kind aller Länder"] // broken encoding?
+//assert result[0].Titel == ["Kind aller Länder"] // alternate encoding ... :(
 
 println "Test successful!"

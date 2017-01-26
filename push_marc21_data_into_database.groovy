@@ -1,4 +1,5 @@
 import util.Marc21XmlParser
+import groovy.sql.Sql
 
 def inputFileName
 
@@ -41,7 +42,7 @@ def dataExtractionPlan = [
 ]
 
 def parser = new Marc21XmlParser(dataExtractionPlan)
-
 def bookData = parser.parseText(inputFile.text)
+
 
 System.exit 0
