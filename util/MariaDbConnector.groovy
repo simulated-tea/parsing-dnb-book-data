@@ -9,7 +9,20 @@ class MariaDbConnector {
     def _sql
     def db_config
     def datasource
-    def schema_config
+    def schema_config = [
+        [table: "buch", columns: [name: "Titel", type: "varchar(255)"], [name: "Inhaltstext_Link", type: "varchar(255)"]],
+        [table: "autor", columns: [name: "Name", type: "varchar(255)"]],
+        [table: "buch_autor", columns: [name: "ID_Buch", type: "int(10)"], [name: "ID_Autor", type: "int(10)"]],
+        [table: "gattung", columns: [name: "Name", type: "varchar(255)"]],
+        [table: "buch_gattung", columns: [name: "ID_Buch", type: "int(10)"], [name: "ID_Gattung", type: "int(10)"]],
+        [table: "inhalt", columns: [name: "Name", type: "varchar(255)"]],
+        [table: "buch_inhalt", columns: [name: "ID_Buch", type: "int(10)"], [name: "ID_Inhalt", type: "int(10)"]],
+        [table: "sachgruppe", columns: [name: "Name", type: "varchar(255)"]],
+        [table: "buch_sachgruppe", columns: [name: "ID_Buch", type: "int(10)"], [name: "ID_Sachgruppe", type: "int(10)"]],
+        [table: "schlagwort", columns: [name: "Name", type: "varchar(255)"]],
+        [table: "buch_schlagwort", columns: [name: "ID_Buch", type: "int(10)"], [name: "ID_Schlagwort", type: "bigint(20)"]],
+        [table: "medium", columns: [name: "ID_Buch", type: "int(10)"], [name: "ISBN13", type: "varchar(17)"], [name: "Typ", type: "varchar(20)"], [name: "Verlag", type: "varchar(255)"], [name: "Verlag_Ort", type: "varchar(255)"], [name: "Erscheinungsjahr", type: "int(10)"]]
+    ]
 
     MariaDbConnector(config_file) {
         db_config           = (new ConfigSlurper()).parse(new URL('file:' + config_file))
