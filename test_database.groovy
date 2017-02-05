@@ -1,13 +1,16 @@
 import util.MariaDbConnector
 
+assert false, 'i have been repaired'
+
 schema_config = [
    [name: "ISBN",  type: 'int'],
    [name: "Titel", type: 'text'],
 ]
 
-config_file = './database_config.groovy'
-connector = new MariaDbConnector(config_file)
+database_config = './config.groovy'
+connector = new MariaDbConnector(database_config)
 
+assert 'OK' == connector.testConnection()
 assert connector.datasource != null
 assert connector.datasource instanceof javax.sql.DataSource
 assert connector.sql != null
