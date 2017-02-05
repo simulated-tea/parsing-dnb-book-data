@@ -31,9 +31,9 @@ marc21 {
 }
 
 database {
-    url      = 'jdbc:mariadb://localhost:3306/books'
-    user     = 'root'
-    password = 'root'
+    url      = "jdbc:mariadb://localhost:3306/books"
+    user     = "root"
+    password = "root"
 
     schema_config = [
         [
@@ -45,7 +45,7 @@ database {
         ], [
             table: "autor",
             columns: [
-                [name: "Name", type: "varchar(255)", source: 'Autor'],
+                [name: "Name", type: "varchar(255)", source: ["Autor", "Autor 2"]],
             ],
         ], [
             table: "buch_autor",
