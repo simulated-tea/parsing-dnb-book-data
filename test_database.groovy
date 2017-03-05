@@ -52,7 +52,7 @@ executeWithPresentTestTables{ // can insert book data
             tags: ["clever", "lies", "fantasy"]
         ]
     ])
-            
+
     assert connector.read('book') == [[id: 1, title: "the book", isbn10: 1234567890]]
     assert connector.read('author') == [[ID: 1, name: "the prophet"]]
     assert connector.read('book_author') == [[id_book: 1, id_author: 1]]
