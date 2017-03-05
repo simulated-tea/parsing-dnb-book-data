@@ -7,7 +7,7 @@ schema_config = [
         table: 'book',
         columns: [
             [name: "title", type: "varchar(255)", source: "title"],
-            [name: "isbn10", type: "int(10)", source: "isbn"],
+            [name: "isbn10", type: "int(10)", source: "isbn", optional: true],
         ],
     ], [
         table: 'author',
@@ -88,6 +88,17 @@ executeWithPresentTestTables{
     assert tables.readFromDb('book_author') == []
     assert tables.readFromDb('tag') == []
     assert statistics == [items: 1, successful_imported: 0, failures: 1]
+}
+executeWithPresentTestTables{
+    println "Test: Optional data may be missing"
+    connector.importBookData([[
+            title: "the book",
+            // isbn missing
+            author: "the prophet",
+            tags: [],
+    ]])
+
+    assert tables.readFromDb('book') == [[id: 1, title: "the book", isbn10: null]]
 }
 executeWithPresentTestTables{
     println "Test: No content in multi-value fields is admissible"
@@ -171,7 +182,7 @@ private createTestTables() {
         CREATE TABLE book (
             id INTEGER NOT NULL AUTO_INCREMENT KEY,
             title VARCHAR(255),
-            isbn10 INTEGER
+            isbn10 INTEGER DEFAULT NULL
         )
     '''
     sql.execute '''

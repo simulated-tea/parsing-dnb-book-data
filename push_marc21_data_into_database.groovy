@@ -1,4 +1,5 @@
 import util.Marc21XmlParser
+import util.MariaDbConnector
 import groovy.sql.Sql
 
 def inputFileName
@@ -19,5 +20,10 @@ config = (new ConfigSlurper()).parse(new URL('file:config.groovy'))
 def parser = new Marc21XmlParser(config.marc21.dataExtractionPlan)
 def bookData = parser.parseText(inputFile.text)
 
+def dbConnector = new MariaDbConnector(config)
+def statistics = dbConnector.importBookData(bookData)
+
+println "Import results:"
+println statistics.collect{ k, v -> "  $k   :  $v" }.join("\n") ?: 'No results received'
 
 System.exit 0

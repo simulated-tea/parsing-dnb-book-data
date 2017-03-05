@@ -40,7 +40,7 @@ database {
             table: "buch",
             columns: [
                 [name: "Titel",            type: "varchar(255)", source: "Titel"],
-                [name: "Inhaltstext_Link", type: "varchar(255)", source: "Inhaltstext Link"],
+                [name: "Inhaltstext_Link", type: "varchar(255)", source: "Inhaltstext Link", optional: true],
             ],
         ], [
             table: "autor",
@@ -104,8 +104,8 @@ database {
                 [name: "ISBN13",           type: "varchar(17)",  source: "ISBN"],
                 [name: "Typ",              type: "varchar(20)",  source: "Medium"],
                 [name: "Verlag",           type: "varchar(255)", source: "Verlag"],
-                [name: "Verlag_Ort",       type: "varchar(255)", source: "Verlag Ort"],
-                [name: "Erscheinungsjahr", type: "int(10)",      source: "Erscheinungsjahr"],
+                [name: "Verlag_Ort",       type: "varchar(255)", source: "Verlag Ort",       optional: true],
+                [name: "Erscheinungsjahr", type: "int(10)",      source: "Erscheinungsjahr", optional: true],
             ],
         ],
     ]

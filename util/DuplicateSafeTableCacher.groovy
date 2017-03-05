@@ -47,7 +47,10 @@ class DuplicateSafeTableCacher {
     def readFromDb(table, whereColumns = [], whereValues = []) {
         def whereClause = ''
         if (whereColumns) {
-            whereClause = 'where ' + whereColumns.collect{ "$it = ?" }.join(' and ')
+            whereClause = 'where '
+            whereClause += (0..whereColumns.size()-1).collect{ i ->
+                 whereColumns[i] + (null == whereValues[i] ? " is NULL" : " = ?")
+            }.join(' and ')
         }
         sql.rows("select * from $table $whereClause", whereValues)
     }
@@ -56,7 +59,6 @@ class DuplicateSafeTableCacher {
         tableCache[table].find{ entry ->
             (/* all given data is the same as in entry */
                 (0..columns.size()-1).every{ i -> entry[columns[i]] == data[i] }
-                // TODO: groovy 2.4, replace by withIndex().every
             ) ? entry : null
         }
     }

@@ -1,5 +1,7 @@
 package util
 
+import groovy.json.JsonOutput as jo
+
 class MariaDbConnector {
     def db_config
     def schema_config
@@ -31,6 +33,10 @@ class MariaDbConnector {
                 } else {
                     throw e
                 }
+            } catch (Exception e) {
+                println "ERROR   -- Unexpected error on data:"
+                println jo.prettyPrint(jo.toJson(bookData))
+                throw e
             }
         }
         importStatistics
@@ -69,6 +75,7 @@ class MariaDbConnector {
         columnSpec.with{
             assert null != type
             assert null != source
+            if (optional && null == data[source]) { return null }
             assert null != data[source]
             switch(type.toLowerCase()) {
                 case ~/^int.*/:     return scalarOrListCast(data[source], Integer)
