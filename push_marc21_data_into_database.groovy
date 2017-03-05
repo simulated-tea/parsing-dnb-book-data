@@ -21,9 +21,7 @@ def parser = new Marc21XmlParser(config.marc21.dataExtractionPlan)
 def bookData = parser.parseText(inputFile.text)
 
 def dbConnector = new MariaDbConnector(config)
-def statistics = dbConnector.importBookData(bookData)
-
-println "Import results:"
-println statistics.collect{ k, v -> "  $k   :  $v" }.join("\n") ?: 'No results received'
+dbConnector.log_debug = true
+dbConnector.importBookData(bookData)
 
 System.exit 0

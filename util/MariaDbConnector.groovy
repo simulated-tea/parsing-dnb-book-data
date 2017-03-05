@@ -3,6 +3,8 @@ package util
 import groovy.json.JsonOutput as jo
 
 class MariaDbConnector {
+    final String MISSING_DATA_ERROR = 'Mandatory source data missing in input'
+
     def db_config
     def schema_config
     def log_debug = false
@@ -18,17 +20,17 @@ class MariaDbConnector {
     def testConnection() { tableCacher.testConnection() }
 
     def importBookData(data) {
-        def importStatistics = [items: 0, successful_imported: 0, failures: 0]
+        def importStatistics = [items: 0, successfully_imported: 0, failures: 0]
         data.each{ bookData ->
             importStatistics.items += 1
             try {
                 tableCacher.withTransaction{
                     importSingleBook(bookData)
                 }
-                importStatistics.successful_imported += 1
+                importStatistics.successfully_imported += 1
             } catch (AssertionError e) {
                 importStatistics.failures += 1
-                if (e.message ==~ /(?s).*null != data\[source.*/) {
+                if (e.message ==~ /.*$MISSING_DATA_ERROR.*/) {
                     println "WARNING -- Faulty data entry encountered:\n $bookData\nNot written."
                 } else {
                     throw e
@@ -39,6 +41,8 @@ class MariaDbConnector {
                 throw e
             }
         }
+        println "Book import results:"
+        println importStatistics.collect{ k, v -> "  $k  --> $v" }.join("\n")
         importStatistics
     }
 
@@ -54,7 +58,7 @@ class MariaDbConnector {
                 def datum
                 if (name.toLowerCase().startsWith('id_')) {
                     def referencedTable = name - 'id_' - 'ID_'
-                    datum = tableIds[referencedTable]
+                    datum = tableIds[referencedTable.toLowerCase()]
                 } else {
                     datum = grabPayloadData(columnSpec, bookData)
                 }
@@ -64,25 +68,35 @@ class MariaDbConnector {
 
             def rowData = columnsToRows columnNames, columnData
             rowData.each{ row ->
-                ensurePersistenceOfSingleEntry table.table, columnNames, row, tableIds
+                def resultEntry = tableCacher.insert table.table, columnNames, row
+                rememberEntryIdForForeignKeys table.table, resultEntry, tableIds
+                if (log_debug) { println "Confirming inserted entry: $resultEntry" }
             }
 
             if (log_debug) { println "Table done. Entry cache state: $tableIds" }
         }
     }
 
-    def grabPayloadData(columnSpec, data) {
-        columnSpec.with{
-            assert null != type
-            assert null != source
-            if (optional && null == data[source]) { return null }
-            assert null != data[source]
-            switch(type.toLowerCase()) {
-                case ~/^int.*/:     return scalarOrListCast(data[source], Integer)
-                case ~/^bigint.*/:  return scalarOrListCast(data[source], BigInteger)
-                case ~/^varchar.*/: return scalarOrListCast(data[source], String)
-            }
+    def grabPayloadData(columnSpec, data) { // /!\ Bad design choices ahead
+        assert null != columnSpec.type
+        assert null != columnSpec.source
+        def sourceItems = []
+        if (columnSpec.source instanceof List) {
+            sourceItems += columnSpec.source.collect{ data[it] }.flatten()
+        } else {
+            sourceItems += data[columnSpec.source]
         }
+        def sourceData = sourceItems.findAll()
+        if (columnSpec.optional && [] == sourceData) { return null }
+        assert [] != sourceData, MISSING_DATA_ERROR
+
+        def castData
+        switch(columnSpec.type.toLowerCase()) {
+            case ~/^int.*/:     castData = sourceData.collect{ it as Integer }
+            case ~/^bigint.*/:  castData = sourceData.collect{ it as BigInteger }
+            case ~/^varchar.*/: castData = sourceData.collect{ it as String }
+        }
+        1 == castData.size() ? castData[0] : castData
     }
 
     def columnsToRows(columnNames, columnData) {
@@ -116,12 +130,6 @@ class MariaDbConnector {
         1 == columnData.findAll{ it instanceof List }.collect{ it.size() }.unique().size()
     }
 
-    def ensurePersistenceOfSingleEntry(tableName, columnNames, columnData, tableIds) {
-        def resultEntry = tableCacher.insert tableName, columnNames, columnData
-        rememberEntryIdForForeignKeys tableName, resultEntry, tableIds
-        if (log_debug) { println "Confirming inserted entry: $resultEntry" }
-    }
-
     def rememberEntryIdForForeignKeys(tableName, resultEntry, tableIds) {
         def entryId
         if (resultEntry.containsKey('id')) {
@@ -131,15 +139,8 @@ class MariaDbConnector {
             entryId = resultEntry.ID
         }
         if (entryId) {
-            tableIds << [(tableName): entryId]
+            tableIds << [(tableName.toLowerCase()): entryId]
         }
-    }
-
-    def read(table, whereColumns, whereValues) {
-    }
-
-    def scalarOrListCast(item, clazz) {
-        (item instanceof List) ? item.collect{ it.asType(clazz) } : item.asType(clazz)
     }
 
     def setLog_debug(value) {
