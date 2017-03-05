@@ -16,12 +16,16 @@ class MariaDbConnector {
     def testConnection() { tableCacher.testConnection() }
 
     def importBookData(data) {
+        def importStatistics = [items: 0, successful_imported: 0, failures: 0]
         data.each{ bookData ->
+            importStatistics.items += 1
             try {
                 tableCacher.withTransaction{
                     importSingleBook(bookData)
                 }
+                importStatistics.successful_imported += 1
             } catch (AssertionError e) {
+                importStatistics.failures += 1
                 if (e.message ==~ /(?s).*null != data\[source.*/) {
                     println "WARNING -- Faulty data entry encountered:\n $bookData\nNot written."
                 } else {
@@ -29,6 +33,7 @@ class MariaDbConnector {
                 }
             }
         }
+        importStatistics
     }
 
     def importSingleBook(bookData) {

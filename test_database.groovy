@@ -47,7 +47,7 @@ executeWithPresentTestTables{
     assert tables.readFromDb('book_author') == []
     assert tables.readFromDb('tag') == []
 
-    connector.importBookData([[
+    def statistics = connector.importBookData([[
             title: "the book",
             isbn: 1234567890,
             author: "the prophet",
@@ -62,6 +62,11 @@ executeWithPresentTestTables{
         [ID: 2, id_book: 1, name: "lies"],
         [ID: 3, id_book: 1, name: "fantasy"],
     ]
+    assert statistics == [
+        items: 1,
+        successful_imported: 1,
+        failures: 0,
+    ]
 }
 executeWithPresentTestTables{
     println "Test: Only complete records are imported."
@@ -69,7 +74,7 @@ executeWithPresentTestTables{
     def originalErr = System.err
     System.out = new PrintStream(new OutputStream() {void write(int b) { /* noop */ } })
     System.err = new PrintStream(new OutputStream() {void write(int b) { /* noop */ } })
-    connector.importBookData([[
+    def statistics = connector.importBookData([[
             title: "the book",
             isbn: 1234567890,
             // author missing
@@ -82,6 +87,7 @@ executeWithPresentTestTables{
     assert tables.readFromDb('author') == []
     assert tables.readFromDb('book_author') == []
     assert tables.readFromDb('tag') == []
+    assert statistics == [items: 1, successful_imported: 0, failures: 1]
 }
 executeWithPresentTestTables{
     println "Test: No content in multi-value fields is admissible"
