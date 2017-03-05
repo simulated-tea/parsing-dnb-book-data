@@ -35,34 +35,104 @@ config.database.url = config.database.url.replace('/books', '/test')
 
 config.database.schema_config = schema_config
 connector = new MariaDbConnector(config)
+tables = connector.tableCacher
+sql = connector.tableCacher.sql
 connector.log_debug = false
 assert 'OK' == connector.testConnection()
 
-executeWithPresentTestTables{ // can insert book data
-    assert connector.read('book') == []
-    assert connector.read('author') == []
-    assert connector.read('book_author') == []
-    assert connector.read('tag') == []
+executeWithPresentTestTables{
+    println "Test: Can insert a full set of data"
+    assert tables.readFromDb('book') == []
+    assert tables.readFromDb('author') == []
+    assert tables.readFromDb('book_author') == []
+    assert tables.readFromDb('tag') == []
 
-    connector.importBookData([
-        [
+    connector.importBookData([[
             title: "the book",
             isbn: 1234567890,
             author: "the prophet",
-            tags: ["clever", "lies", "fantasy"]
-        ]
-    ])
+            tags: ["clever", "lies", "fantasy"],
+    ]])
 
-    assert connector.read('book') == [[id: 1, title: "the book", isbn10: 1234567890]]
-    assert connector.read('author') == [[ID: 1, name: "the prophet"]]
-    assert connector.read('book_author') == [[id_book: 1, id_author: 1]]
-    assert connector.read('tag') == [
+    assert tables.readFromDb('book') == [[id: 1, title: "the book", isbn10: 1234567890]]
+    assert tables.readFromDb('author') == [[ID: 1, name: "the prophet"]]
+    assert tables.readFromDb('book_author') == [[id_book: 1, id_author: 1]]
+    assert tables.readFromDb('tag') == [
         [ID: 1, id_book: 1, name: "clever"],
         [ID: 2, id_book: 1, name: "lies"],
         [ID: 3, id_book: 1, name: "fantasy"],
     ]
 }
-// TODO: Test with reusing existing author from db!
+executeWithPresentTestTables{
+    println "Test: Only complete records are imported."
+    def originalOut = System.out
+    def originalErr = System.err
+    System.out = new PrintStream(new OutputStream() {void write(int b) { /* noop */ } })
+    System.err = new PrintStream(new OutputStream() {void write(int b) { /* noop */ } })
+    connector.importBookData([[
+            title: "the book",
+            isbn: 1234567890,
+            // author missing
+            tags: [],
+    ]])
+    System.out = originalOut
+    System.err = originalErr
+
+    assert tables.readFromDb('book') == []
+    assert tables.readFromDb('author') == []
+    assert tables.readFromDb('book_author') == []
+    assert tables.readFromDb('tag') == []
+}
+executeWithPresentTestTables{
+    println "Test: No content in multi-value fields is admissible"
+    connector.importBookData([[
+            title: "the book",
+            isbn: 1234567890,
+            author: "the prophet",
+            tags: [],        // no tags
+    ]])
+
+    assert tables.readFromDb('book') == [[id: 1, title: "the book", isbn10: 1234567890]]
+    assert tables.readFromDb('tag') == []
+}
+executeWithPresentTestTables{
+    println "Test: Deduplicates the author entry (or any table entry)"
+    connector.importBookData([[
+            title: "the book",
+            isbn: 1234567890,
+            author: "the prophet",
+            tags: [],
+        ],[
+            title: "the new book",
+            isbn: 1234567891,
+            author: "the prophet",
+            tags: [],
+    ]])
+
+    assert tables.readFromDb('book') == [
+        [id: 1, title: "the book", isbn10: 1234567890],
+        [id: 2, title: "the new book", isbn10: 1234567891],
+    ]
+    assert tables.readFromDb('author') == [[ID: 1, name: "the prophet"]]
+    assert tables.readFromDb('book_author') == [
+        [id_book: 1, id_author: 1],
+        [id_book: 2, id_author: 1],
+    ]
+}
+executeWithPresentTestTables{
+    println "Test: Deduplicates if entry already exists in database"
+    sql.execute 'INSERT INTO author (ID, name) VALUES (7, "the prophet")'
+
+    connector.importBookData([[
+            title: "the book",
+            isbn: 1234567890,
+            author: "the prophet",
+            tags: [],
+    ]])
+
+    assert tables.readFromDb('author') == [[ID: 7, name: "the prophet"]]
+    assert tables.readFromDb('book_author') == [[id_book: 1, id_author: 7]]
+}
 
 println "Test successful!"
 
@@ -77,6 +147,7 @@ private executeWithPresentTestTables(Closure code) {
         println e
         System.exit 1
     }
+    tables.clear() // clear cache
     try {
         code()
     } finally {
@@ -90,27 +161,27 @@ private executeWithPresentTestTables(Closure code) {
 }
 
 private createTestTables() {
-    connector.sql.execute '''
+    sql.execute '''
         CREATE TABLE book (
             id INTEGER NOT NULL AUTO_INCREMENT KEY,
             title VARCHAR(255),
             isbn10 INTEGER
         )
     '''
-    connector.sql.execute '''
+    sql.execute '''
         CREATE TABLE author (
             ID INTEGER NOT NULL AUTO_INCREMENT KEY,
             name VARCHAR(255)
         )
     '''
-    // TODO: add foreign keys
-    connector.sql.execute '''
+    // maybe add foreign keys -- or maybe not: assertion errors are nicer after all
+    sql.execute '''
         CREATE TABLE book_author (
             id_book INTEGER,
             id_author INTEGER
         )
     '''
-    connector.sql.execute '''
+    sql.execute '''
         CREATE TABLE tag (
             ID INTEGER NOT NULL AUTO_INCREMENT KEY,
             id_book INTEGER,
@@ -120,8 +191,8 @@ private createTestTables() {
 }
 
 private dropTestTables() {
-    connector.sql.execute 'DROP TABLE book'
-    connector.sql.execute 'DROP TABLE author'
-    connector.sql.execute 'DROP TABLE book_author'
-    connector.sql.execute 'DROP TABLE tag'
+    sql.execute 'DROP TABLE book'
+    sql.execute 'DROP TABLE author'
+    sql.execute 'DROP TABLE book_author'
+    sql.execute 'DROP TABLE tag'
 }
