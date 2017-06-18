@@ -11,6 +11,7 @@ class Normalizer {
             if (matcher) return matcher[0][1]
             null
         },
+        strip_brackets: { it - '[' - ']' },
     ]
 
     def process(data) {

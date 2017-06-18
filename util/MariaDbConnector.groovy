@@ -88,13 +88,14 @@ class MariaDbConnector {
         }
         def sourceData = sourceItems.findAll()
         if (columnSpec.optional && [] == sourceData) { return null }
-        assert [] != sourceData, MISSING_DATA_ERROR
+        assert [] != sourceData, "$MISSING_DATA_ERROR Column: $columnSpec.name"
 
         def castData
         switch(columnSpec.type.toLowerCase()) {
             case ~/^int.*/:     castData = sourceData.collect{ it as Integer }
             case ~/^bigint.*/:  castData = sourceData.collect{ it as BigInteger }
             case ~/^varchar.*/: castData = sourceData.collect{ it as String }
+            case ~/^isbn.*/:    castData = sourceData.findResults{ it.size() == 13 ? it : null } ?: [sourceData.first()]
         }
         1 == castData.size() ? castData[0] : castData
     }

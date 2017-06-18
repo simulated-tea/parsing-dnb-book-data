@@ -33,6 +33,7 @@ marc21 {
 normalize {
     actions = [
         [value: "Erscheinungsjahr", transformation: "find_year_in_string"],
+        [value: "Verlag Ort",       transformation: "strip_brackets"],
     ]
 }
 
@@ -117,7 +118,7 @@ database {
             table: "medium",
             columns: [
                 [name: "ID_Buch",          type: "int(10)"],
-                [name: "ISBN13",           type: "varchar(17)",  source: "ISBN"],
+                [name: "ISBN_13",          type: "isbn",         source: "ISBN"],
                 [name: "Typ",              type: "varchar(20)",  source: "Medium"],
                 [name: "Verlag",           type: "varchar(255)", source: "Verlag"],
                 [name: "Verlag_Ort",       type: "varchar(255)", source: "Verlag Ort",       optional: true],
