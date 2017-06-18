@@ -22,11 +22,17 @@ marc21 {
        [name: "Schlagworte 2",        findby: [tag: "650", code: "a"],  resolve_multiple: "collect"],
        [name: "Schlagworte 3",        findby: [tag: "651", code: "a"],  resolve_multiple: "collect"],
        [name: "Schlagworte exotisch", findby: [tag: "653", code: "a"],  resolve_multiple: "collect"],
-       [name: "Schlagworte obskur",   findby: [tag: "926", code: "x"],  resolve_multiple: "collect"],
+       [name: "Schlagworte publisher",findby: [tag: "926", code: "x"],  resolve_multiple: "collect"],
        [name: "Gattung",              findby: [tag: "655", code: "a",   where: [code: "2", value: "gatbeg"]]],
        [name: "Inhalt",               findby: [tag: "655", code: "a",   where: [code: "2", value: "gnd-content"]]],
        [name: "Inhaltstext Link",     findby: [tag: "856", code: "u"],  resolve_multiple: "collect"],
        [name: "Inhaltstext Link Typ", findby: [tag: "856", code: "3"],  resolve_multiple: "collect"],
+    ]
+}
+
+normalize {
+    actions = [
+        [value: "Erscheinungsjahr", transformation: "find_year_in_string"],
     ]
 }
 
@@ -89,7 +95,17 @@ database {
         ], [
             table: "schlagwort",
             columns: [
-                [name: "Schlagwort", type: "varchar(255)", source: ["Schlagworte 1", "Schlagworte 2", "Schlagworte 3"]],
+                [
+                    name: "Schlagwort",
+                    type: "varchar(255)",
+                    source: [
+                        "Schlagworte 1",
+                        "Schlagworte 2",
+                        "Schlagworte 3",
+                        "Schlagworte exotisch",
+                        "Schlagworte publisher",
+                    ],
+                ],
             ],
         ], [
             table: "buch_schlagwort",

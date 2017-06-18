@@ -1,5 +1,6 @@
 import util.Marc21XmlParser
 import util.MariaDbConnector
+import util.Normalizer
 import groovy.sql.Sql
 
 def inputFileName
@@ -19,6 +20,9 @@ config = (new ConfigSlurper()).parse(new URL('file:config.groovy'))
 
 def parser = new Marc21XmlParser(config.marc21.dataExtractionPlan)
 def bookData = parser.parseText(inputFile.text)
+
+def normalizer = new Normalizer(config: config.normalize)
+def qualityBookData = normalizer.process(bookData)
 
 def dbConnector = new MariaDbConnector(config)
 dbConnector.log_debug = true

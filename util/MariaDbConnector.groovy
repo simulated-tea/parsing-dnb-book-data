@@ -32,6 +32,7 @@ class MariaDbConnector {
                 importStatistics.failures += 1
                 if (e.message ==~ /.*$MISSING_DATA_ERROR.*/) {
                     println "WARNING -- Faulty data entry encountered:\n $bookData\nNot written."
+                    // TODO: clean out cache!! :((
                 } else {
                     throw e
                 }
