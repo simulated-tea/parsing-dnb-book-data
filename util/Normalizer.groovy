@@ -6,7 +6,11 @@ class Normalizer {
     def config
 
     def transform = [
-        find_year_in_string: { value -> (value =~ /.*(\d{4}).*/)[0][1] },
+        find_year_in_string: { value ->
+            def matcher = value =~ /.*(\d{4}).*/
+            if (matcher) return matcher[0][1]
+            null
+        },
     ]
 
     def process(data) {
@@ -15,7 +19,12 @@ class Normalizer {
 
             config.actions.each{ action ->
                 try{
-                    result[action.value] = transform[action.transformation] entry[action.value]
+                    def value = entry[action.value]
+                    if (value instanceof List) {
+                        result[action.value] = value.collect{ transform[action.transformation] it }
+                    } else {
+                        result[action.value] = transform[action.transformation] value
+                    }
                 } catch (AssertionError e) {
                     println "WARNING -- Transformation malfunctioned on: $action.value -- dropping"
                     println jo.prettyPrint(jo.toJson(entry))

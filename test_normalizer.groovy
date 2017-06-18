@@ -29,6 +29,16 @@ test_year_finding: {
     def result = results[0]
     assert result.a == "2017"
 }
+test_year_finding_invalid: {
+    def normalizer = new Normalizer(config: default_config)
+    def data = [[a: "März xxxx"]]
+
+    def results = normalizer.process(data)
+
+    assert results.size() == 1
+    def result = results[0]
+    assert result.a == null
+}
 
 
 println "Test successful!"

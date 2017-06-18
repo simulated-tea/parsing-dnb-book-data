@@ -42,6 +42,7 @@ class DuplicateSafeTableCacher {
         sql.withTransaction{
             closure()
         }
+        // Don't we need cache-update (deletions) on rollbacks?
     }
 
     def readFromDb(table, whereColumns = [], whereValues = []) {

@@ -26,6 +26,6 @@ def qualityBookData = normalizer.process(bookData)
 
 def dbConnector = new MariaDbConnector(config)
 dbConnector.log_debug = true
-dbConnector.importBookData(bookData)
+dbConnector.importBookData(qualityBookData)
 
 System.exit 0
